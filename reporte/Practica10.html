@@ -17,6 +17,8 @@
   figure img { width: 80%; border: 1px solid #ccc; }
   figcaption { font-size: 10pt; margin-top: 6px; }
   ul { padding-left: 22px; }
+  figure { break-inside: avoid; }
+  figure img.chica { width: 55%; }
 </style>
 </head>
 <body>
@@ -321,12 +323,14 @@ CREATE TABLE libros (
 
 <figure><img src="img/registro_enviado.jpg"><figcaption>Registro: libro guardado correctamente</figcaption></figure>
 
-<figure><img src="img/consulta.png" style="width:55%"><figcaption>Consulta: libros registrados con sus portadas (localhost:8080/consulta.php)</figcaption></figure>
+<figure><img class="chica" src="img/consulta_1.png"><figcaption>Consulta: libros registrados con sus portadas, parte 1 (localhost:8080/consulta.php)</figcaption></figure>
+
+<figure><img class="chica" src="img/consulta_2.png"><figcaption>Consulta: libros registrados con sus portadas, parte 2</figcaption></figure>
 
 <figure><img src="img/consulta_mysql.png"><figcaption>Filas de la tabla libros en MySQL; la columna bytes_portada muestra el tamaño del BLOB</figcaption></figure>
 
 <p>El volcado de la base de datos (<code>mysqldump --hex-blob</code>) se entrega en el archivo <code>libreria.sql</code>.</p>
-<figure><img src="img/github_repo.png" style="width:55%"><figcaption>Repositorio en GitHub</figcaption></figure>
+<figure><img class="chica" src="img/github_repo.png"><figcaption>Repositorio en GitHub</figcaption></figure>
 
 <figure><img src="img/github_commits.png"><figcaption>Historial de commits en GitHub</figcaption></figure>
 
