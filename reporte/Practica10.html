@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Práctica 10</title>
+<style>
+  @page { size: letter; margin: 2cm; }
+  body { font-family: "Liberation Sans", Arial, Helvetica, sans-serif; font-size: 11pt; line-height: 1.45; color: #111; }
+  h1 { text-align: center; font-size: 26pt; margin: 0 0 4px; }
+  .sub { text-align: center; font-weight: bold; font-size: 10pt; margin: 0 0 28px; }
+  h2 { font-size: 15pt; border-bottom: 1px solid #999; padding-bottom: 4px; margin: 26px 0 12px; }
+  code { font-family: "Noto Sans Mono", Menlo, monospace; font-size: 10pt; }
+  pre { font-family: "Noto Sans Mono", Menlo, monospace; font-size: 9pt; background: #f4f4f4; border: 1px solid #ddd; padding: 10px 12px; white-space: pre-wrap; }
+  .archivo { font-weight: bold; margin: 16px 0 4px; }
+  .formula { text-align: center; font-family: "Times New Roman", serif; font-size: 13pt; margin: 10px 0 14px; }
+  figure { margin: 18px 0; text-align: center; page-break-inside: avoid; }
+  figure img { width: 80%; border: 1px solid #ccc; }
+  figcaption { font-size: 10pt; margin-top: 6px; }
+  ul { padding-left: 22px; }
+</style>
+</head>
+<body>
+
+<h1>Práctica 10</h1>
+<p class="sub">Programación para Internet</p>
+
+<h2>Instrucciones</h2>
+<p><i>Mini-sistema de registro de libros para una librería.</i> Desarrollar un sistema con tres páginas: <b>Inicio</b>, con una bienvenida que permite navegar a las otras secciones; <b>Registro</b>, con un formulario para registrar libros nuevos; y <b>Consulta</b>, que despliega los libros registrados en la base de datos.</p>
+<p>Cada libro tiene id (llave primaria), Autor, Título, Fecha de publicación e Imagen de portada. Se debe usar una base de datos relacional en Docker y la imagen se guarda en la base de datos como BLOB. Las tres páginas deben usar únicamente Bootstrap 5 para todos sus elementos y tener navegación entre ellas. El proyecto se lleva en un repositorio git local con commits conforme avanza, vinculado a GitHub.</p>
+<p>Repositorio: <a href="https://github.com/Nier18/Practica10-Libreria">https://github.com/Nier18/Practica10-Libreria</a></p>
+
+<h2>Temática</h2>
+<p>La librería se llama <b>Cara B Libros</b> y vende libros de música: biografías de músicos, historias de bandas y de discos.</p>
+
+<h2>Código</h2>
+<p>El proyecto usa tres contenedores: <code>web</code> (php:8.2-apache con mysqli, puerto 8080), <code>db</code> (mysql:8.1.0, base de datos <code>libreria</code>) y <code>phpmyadmin</code> (puerto 8081). El archivo <code>crear_tabla.sql</code> se carga automáticamente al iniciar el contenedor de MySQL. La portada se guarda en una columna <code>MEDIUMBLOB</code>.</p>
+<p class="archivo">Dockerfile</p>
+<pre>FROM php:8.2-apache
+RUN docker-php-ext-install mysqli pdo pdo_mysql</pre>
+<p class="archivo">docker-compose.yml</p>
+<pre>services:
+  web:
+    build: .
+    ports:
+      - &quot;8080:80&quot;
+    depends_on:
+      - db
+    volumes:
+      - ./html:/var/www/html
+  db:
+    image: mysql:8.1.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: libreria
+      MYSQL_USER: usuario
+      MYSQL_PASSWORD: &quot;123456&quot;
+    volumes:
+      - ./mysql_data:/var/lib/mysql
+      - ./bd/crear_tabla.sql:/docker-entrypoint-initdb.d/crear_tabla.sql
+  phpmyadmin:
+    image: phpmyadmin
+    ports:
+      - &quot;8081:80&quot;
+    depends_on:
+      - db
+    environment:
+      PMA_HOST: db</pre>
+<p class="archivo">bd/crear_tabla.sql</p>
+<pre>USE libreria;
+
+CREATE TABLE libros (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    autor VARCHAR(100) NOT NULL,
+    titulo VARCHAR(150) NOT NULL,
+    fecha_publicacion DATE NOT NULL,
+    portada MEDIUMBLOB NOT NULL
+);</pre>
+<p class="archivo">html/index.html</p>
+<pre>&lt;!DOCTYPE html&gt;
+&lt;html lang=&quot;es&quot;&gt;
+&lt;head&gt;
+    &lt;meta charset=&quot;UTF-8&quot;&gt;
+    &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot;&gt;
+    &lt;title&gt;Cara B Libros&lt;/title&gt;
+    &lt;link href=&quot;https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css&quot; rel=&quot;stylesheet&quot;&gt;
+    &lt;script src=&quot;https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js&quot;&gt;&lt;/script&gt;
+&lt;/head&gt;
+&lt;body class=&quot;bg-light&quot;&gt;
+    &lt;nav class=&quot;navbar navbar-expand-sm bg-dark navbar-dark&quot;&gt;
+        &lt;div class=&quot;container&quot;&gt;
+            &lt;a class=&quot;navbar-brand&quot; href=&quot;index.html&quot;&gt;Cara B Libros&lt;/a&gt;
+            &lt;ul class=&quot;navbar-nav&quot;&gt;
+                &lt;li class=&quot;nav-item&quot;&gt;
+                    &lt;a class=&quot;nav-link active&quot; href=&quot;index.html&quot;&gt;Inicio&lt;/a&gt;
+                &lt;/li&gt;
+                &lt;li class=&quot;nav-item&quot;&gt;
+                    &lt;a class=&quot;nav-link&quot; href=&quot;registro.html&quot;&gt;Registro&lt;/a&gt;
+                &lt;/li&gt;
+                &lt;li class=&quot;nav-item&quot;&gt;
+                    &lt;a class=&quot;nav-link&quot; href=&quot;consulta.php&quot;&gt;Consulta&lt;/a&gt;
+                &lt;/li&gt;
+            &lt;/ul&gt;
+        &lt;/div&gt;
+    &lt;/nav&gt;
+
+    &lt;div class=&quot;container&quot;&gt;
+        &lt;div class=&quot;p-5 mt-4 bg-white border rounded&quot;&gt;
+            &lt;h1 class=&quot;display-5&quot;&gt;Bienvenido a Cara B Libros&lt;/h1&gt;
+            &lt;p class=&quot;lead&quot;&gt;La librería para quienes leen sobre bandas, discos y músicos.&lt;/p&gt;
+            &lt;p&gt;Aquí puedes registrar los libros de música que llegan a la tienda y consultar el catálogo completo con sus portadas.&lt;/p&gt;
+            &lt;a class=&quot;btn btn-dark&quot; href=&quot;registro.html&quot;&gt;Registrar un libro&lt;/a&gt;
+            &lt;a class=&quot;btn btn-outline-dark&quot; href=&quot;consulta.php&quot;&gt;Ver el catálogo&lt;/a&gt;
+        &lt;/div&gt;
+
+        &lt;div class=&quot;row mt-4&quot;&gt;
+            &lt;div class=&quot;col-sm-6&quot;&gt;
+                &lt;div class=&quot;card mb-3&quot;&gt;
+                    &lt;div class=&quot;card-body&quot;&gt;
+                        &lt;h5 class=&quot;card-title&quot;&gt;Registro&lt;/h5&gt;
+                        &lt;p class=&quot;card-text&quot;&gt;Da de alta un libro nuevo con su autor, título, fecha de publicación y portada.&lt;/p&gt;
+                        &lt;a class=&quot;btn btn-secondary&quot; href=&quot;registro.html&quot;&gt;Ir al registro&lt;/a&gt;
+                    &lt;/div&gt;
+                &lt;/div&gt;
+            &lt;/div&gt;
+            &lt;div class=&quot;col-sm-6&quot;&gt;
+                &lt;div class=&quot;card mb-3&quot;&gt;
+                    &lt;div class=&quot;card-body&quot;&gt;
+                        &lt;h5 class=&quot;card-title&quot;&gt;Consulta&lt;/h5&gt;
+                        &lt;p class=&quot;card-text&quot;&gt;Revisa todos los libros que ya están guardados en la base de datos.&lt;/p&gt;
+                        &lt;a class=&quot;btn btn-secondary&quot; href=&quot;consulta.php&quot;&gt;Ir a la consulta&lt;/a&gt;
+                    &lt;/div&gt;
+                &lt;/div&gt;
+            &lt;/div&gt;
+        &lt;/div&gt;
+    &lt;/div&gt;
+&lt;/body&gt;
+&lt;/html&gt;</pre>
+<p class="archivo">html/registro.html</p>
+<pre>&lt;!DOCTYPE html&gt;
+&lt;html lang=&quot;es&quot;&gt;
+&lt;head&gt;
+    &lt;meta charset=&quot;UTF-8&quot;&gt;
+    &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot;&gt;
+    &lt;title&gt;Cara B Libros&lt;/title&gt;
+    &lt;link href=&quot;https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css&quot; rel=&quot;stylesheet&quot;&gt;
+    &lt;script src=&quot;https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js&quot;&gt;&lt;/script&gt;
+&lt;/head&gt;
+&lt;body class=&quot;bg-light&quot;&gt;
+    &lt;nav class=&quot;navbar navbar-expand-sm bg-dark navbar-dark&quot;&gt;
+        &lt;div class=&quot;container&quot;&gt;
+            &lt;a class=&quot;navbar-brand&quot; href=&quot;index.html&quot;&gt;Cara B Libros&lt;/a&gt;
+            &lt;ul class=&quot;navbar-nav&quot;&gt;
+                &lt;li class=&quot;nav-item&quot;&gt;
+                    &lt;a class=&quot;nav-link&quot; href=&quot;index.html&quot;&gt;Inicio&lt;/a&gt;
+                &lt;/li&gt;
+                &lt;li class=&quot;nav-item&quot;&gt;
+                    &lt;a class=&quot;nav-link active&quot; href=&quot;registro.html&quot;&gt;Registro&lt;/a&gt;
+                &lt;/li&gt;
+                &lt;li class=&quot;nav-item&quot;&gt;
+                    &lt;a class=&quot;nav-link&quot; href=&quot;consulta.php&quot;&gt;Consulta&lt;/a&gt;
+                &lt;/li&gt;
+            &lt;/ul&gt;
+        &lt;/div&gt;
+    &lt;/nav&gt;
+
+    &lt;div class=&quot;container&quot;&gt;
+        &lt;h1 class=&quot;mt-4&quot;&gt;Registro de libros&lt;/h1&gt;
+        &lt;h6&gt;Llena los datos del libro nuevo.&lt;/h6&gt;
+
+        &lt;form action=&quot;guardar.php&quot; method=&quot;post&quot; enctype=&quot;multipart/form-data&quot;&gt;
+            &lt;div class=&quot;mb-3 mt-3&quot;&gt;
+                &lt;label for=&quot;autor&quot; class=&quot;form-label&quot;&gt;Autor:&lt;/label&gt;
+                &lt;input type=&quot;text&quot; class=&quot;form-control&quot; id=&quot;autor&quot; placeholder=&quot;Ingrese el autor&quot; name=&quot;autor&quot; required&gt;
+            &lt;/div&gt;
+            &lt;div class=&quot;mb-3&quot;&gt;
+                &lt;label for=&quot;titulo&quot; class=&quot;form-label&quot;&gt;Título:&lt;/label&gt;
+                &lt;input type=&quot;text&quot; class=&quot;form-control&quot; id=&quot;titulo&quot; placeholder=&quot;Ingrese el título&quot; name=&quot;titulo&quot; required&gt;
+            &lt;/div&gt;
+            &lt;div class=&quot;mb-3&quot;&gt;
+                &lt;label for=&quot;fecha&quot; class=&quot;form-label&quot;&gt;Fecha de publicación:&lt;/label&gt;
+                &lt;input type=&quot;date&quot; class=&quot;form-control&quot; id=&quot;fecha&quot; name=&quot;fecha&quot; required&gt;
+            &lt;/div&gt;
+            &lt;div class=&quot;mb-3&quot;&gt;
+                &lt;label for=&quot;portada&quot; class=&quot;form-label&quot;&gt;Imagen de portada:&lt;/label&gt;
+                &lt;input type=&quot;file&quot; class=&quot;form-control&quot; id=&quot;portada&quot; name=&quot;portada&quot; accept=&quot;image/*&quot; required&gt;
+            &lt;/div&gt;
+            &lt;button type=&quot;submit&quot; class=&quot;btn btn-dark&quot;&gt;Registrar&lt;/button&gt;
+        &lt;/form&gt;
+    &lt;/div&gt;
+&lt;/body&gt;
+&lt;/html&gt;</pre>
+<p class="archivo">html/guardar.php</p>
+<pre>&lt;!DOCTYPE html&gt;
+&lt;html lang=&quot;es&quot;&gt;
+&lt;head&gt;
+    &lt;meta charset=&quot;UTF-8&quot;&gt;
+    &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot;&gt;
+    &lt;title&gt;Cara B Libros&lt;/title&gt;
+    &lt;link href=&quot;https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css&quot; rel=&quot;stylesheet&quot;&gt;
+    &lt;script src=&quot;https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js&quot;&gt;&lt;/script&gt;
+&lt;/head&gt;
+&lt;body class=&quot;bg-light&quot;&gt;
+    &lt;nav class=&quot;navbar navbar-expand-sm bg-dark navbar-dark&quot;&gt;
+        &lt;div class=&quot;container&quot;&gt;
+            &lt;a class=&quot;navbar-brand&quot; href=&quot;index.html&quot;&gt;Cara B Libros&lt;/a&gt;
+            &lt;ul class=&quot;navbar-nav&quot;&gt;
+                &lt;li class=&quot;nav-item&quot;&gt;
+                    &lt;a class=&quot;nav-link&quot; href=&quot;index.html&quot;&gt;Inicio&lt;/a&gt;
+                &lt;/li&gt;
+                &lt;li class=&quot;nav-item&quot;&gt;
+                    &lt;a class=&quot;nav-link active&quot; href=&quot;registro.html&quot;&gt;Registro&lt;/a&gt;
+                &lt;/li&gt;
+                &lt;li class=&quot;nav-item&quot;&gt;
+                    &lt;a class=&quot;nav-link&quot; href=&quot;consulta.php&quot;&gt;Consulta&lt;/a&gt;
+                &lt;/li&gt;
+            &lt;/ul&gt;
+        &lt;/div&gt;
+    &lt;/nav&gt;
+
+    &lt;div class=&quot;container&quot;&gt;
+        &lt;h1 class=&quot;mt-4&quot;&gt;Registro de libros&lt;/h1&gt;
+
+        &lt;?php
+            $con = mysqli_connect(&quot;db&quot;, &quot;usuario&quot;, &quot;123456&quot;, &quot;libreria&quot;);
+
+            if (mysqli_connect_errno()) {
+                echo &quot;&lt;p&gt;Falló la conexión con MySQL: &quot; . mysqli_connect_error() . &quot;&lt;/p&gt;&quot;;
+            }
+
+            $autor = mysqli_real_escape_string($con, $_POST[&quot;autor&quot;]);
+            $titulo = mysqli_real_escape_string($con, $_POST[&quot;titulo&quot;]);
+            $fecha = mysqli_real_escape_string($con, $_POST[&quot;fecha&quot;]);
+            $portada = mysqli_real_escape_string($con, file_get_contents($_FILES[&quot;portada&quot;][&quot;tmp_name&quot;]));
+
+            $sql = &quot;INSERT INTO libros (autor, titulo, fecha_publicacion, portada)
+                VALUES (&#x27;$autor&#x27;, &#x27;$titulo&#x27;, &#x27;$fecha&#x27;, &#x27;$portada&#x27;);&quot;;
+
+            if(!mysqli_query($con, $sql)) {
+                die(&#x27;Error: &#x27; . mysqli_error($con));
+            } else {
+                echo &quot;&lt;div class=&#x27;alert alert-success&#x27;&gt;El libro se ha registrado correctamente.&lt;/div&gt;&quot;;
+            }
+
+            mysqli_close($con);
+        ?&gt;
+
+        &lt;a class=&quot;btn btn-dark&quot; href=&quot;registro.html&quot;&gt;Registrar otro libro&lt;/a&gt;
+        &lt;a class=&quot;btn btn-outline-dark&quot; href=&quot;consulta.php&quot;&gt;Ver el catálogo&lt;/a&gt;
+    &lt;/div&gt;
+&lt;/body&gt;
+&lt;/html&gt;</pre>
+<p class="archivo">html/consulta.php</p>
+<pre>&lt;!DOCTYPE html&gt;
+&lt;html lang=&quot;es&quot;&gt;
+&lt;head&gt;
+    &lt;meta charset=&quot;UTF-8&quot;&gt;
+    &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot;&gt;
+    &lt;title&gt;Cara B Libros&lt;/title&gt;
+    &lt;link href=&quot;https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css&quot; rel=&quot;stylesheet&quot;&gt;
+    &lt;script src=&quot;https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js&quot;&gt;&lt;/script&gt;
+&lt;/head&gt;
+&lt;body class=&quot;bg-light&quot;&gt;
+    &lt;nav class=&quot;navbar navbar-expand-sm bg-dark navbar-dark&quot;&gt;
+        &lt;div class=&quot;container&quot;&gt;
+            &lt;a class=&quot;navbar-brand&quot; href=&quot;index.html&quot;&gt;Cara B Libros&lt;/a&gt;
+            &lt;ul class=&quot;navbar-nav&quot;&gt;
+                &lt;li class=&quot;nav-item&quot;&gt;
+                    &lt;a class=&quot;nav-link&quot; href=&quot;index.html&quot;&gt;Inicio&lt;/a&gt;
+                &lt;/li&gt;
+                &lt;li class=&quot;nav-item&quot;&gt;
+                    &lt;a class=&quot;nav-link&quot; href=&quot;registro.html&quot;&gt;Registro&lt;/a&gt;
+                &lt;/li&gt;
+                &lt;li class=&quot;nav-item&quot;&gt;
+                    &lt;a class=&quot;nav-link active&quot; href=&quot;consulta.php&quot;&gt;Consulta&lt;/a&gt;
+                &lt;/li&gt;
+            &lt;/ul&gt;
+        &lt;/div&gt;
+    &lt;/nav&gt;
+
+    &lt;div class=&quot;container&quot;&gt;
+        &lt;h1 class=&quot;mt-4&quot;&gt;Libros registrados&lt;/h1&gt;
+
+        &lt;div class=&quot;row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4 mt-1 mb-5&quot;&gt;
+            &lt;?php
+                $con = mysqli_connect(&quot;db&quot;, &quot;usuario&quot;, &quot;123456&quot;, &quot;libreria&quot;);
+                if (mysqli_connect_errno()) {
+                    echo &quot;&lt;p&gt;Falló la conexión con MySQL: &quot; . mysqli_connect_error() . &quot;&lt;/p&gt;&quot;;
+                }
+                $sql = &quot;SELECT * FROM libros;&quot;;
+                $resultado = mysqli_query($con, $sql);
+                while($row = mysqli_fetch_array($resultado)) {
+                    echo &quot;&lt;div class=&#x27;col&#x27;&gt;&quot;;
+                    echo &quot;&lt;div class=&#x27;card h-100&#x27;&gt;&quot;;
+                    echo &quot;&lt;img class=&#x27;card-img-top&#x27; src=&#x27;data:image/jpeg;base64,&quot; . base64_encode($row[&#x27;portada&#x27;]) . &quot;&#x27;&gt;&quot;;
+                    echo &quot;&lt;div class=&#x27;card-body&#x27;&gt;&quot;;
+                    echo &quot;&lt;h5 class=&#x27;card-title&#x27;&gt;&quot; . $row[&#x27;titulo&#x27;] . &quot;&lt;/h5&gt;&quot;;
+                    echo &quot;&lt;p class=&#x27;card-text&#x27;&gt;&quot; . $row[&#x27;autor&#x27;] . &quot;&lt;/p&gt;&quot;;
+                    echo &quot;&lt;/div&gt;&quot;;
+                    echo &quot;&lt;div class=&#x27;card-footer&#x27;&gt;&quot;;
+                    echo &quot;&lt;small class=&#x27;text-muted&#x27;&gt;Publicado: &quot; . $row[&#x27;fecha_publicacion&#x27;] . &quot; (id &quot; . $row[&#x27;id&#x27;] . &quot;)&lt;/small&gt;&quot;;
+                    echo &quot;&lt;/div&gt;&quot;;
+                    echo &quot;&lt;/div&gt;&quot;;
+                    echo &quot;&lt;/div&gt;&quot;;
+                }
+                mysqli_close($con);
+            ?&gt;
+        &lt;/div&gt;
+    &lt;/div&gt;
+&lt;/body&gt;
+&lt;/html&gt;</pre>
+
+<h2>Ejecución</h2>
+<p>Se levantó el proyecto con <code>docker compose up -d --build</code>.</p>
+<figure><img src="img/docker_ps.png"><figcaption>Contenedores del proyecto corriendo (docker ps)</figcaption></figure>
+
+<figure><img src="img/inicio.png"><figcaption>Inicio: localhost:8080/index.html</figcaption></figure>
+
+<figure><img src="img/registro_vacio.jpg"><figcaption>Registro: formulario vacío (localhost:8080/registro.html)</figcaption></figure>
+
+<figure><img src="img/registro_lleno.jpg"><figcaption>Registro: formulario lleno con título, autor, fecha y portada</figcaption></figure>
+
+<figure><img src="img/registro_enviado.jpg"><figcaption>Registro: libro guardado correctamente</figcaption></figure>
+
+<figure><img src="img/consulta.png" style="width:55%"><figcaption>Consulta: libros registrados con sus portadas (localhost:8080/consulta.php)</figcaption></figure>
+
+<figure><img src="img/consulta_mysql.png"><figcaption>Filas de la tabla libros en MySQL; la columna bytes_portada muestra el tamaño del BLOB</figcaption></figure>
+
+<p>El volcado de la base de datos (<code>mysqldump --hex-blob</code>) se entrega en el archivo <code>libreria.sql</code>.</p>
+<figure><img src="img/github_repo.png" style="width:55%"><figcaption>Repositorio en GitHub</figcaption></figure>
+
+<figure><img src="img/github_commits.png"><figcaption>Historial de commits en GitHub</figcaption></figure>
+
+
+</body>
+</html>
