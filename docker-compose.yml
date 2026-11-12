@@ -1,0 +1,27 @@
+services:
+  web:
+    build: .
+    ports:
+      - "8080:80"
+    depends_on:
+      - db
+    volumes:
+      - ./html:/var/www/html
+  db:
+    image: mysql:8.1.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: libreria
+      MYSQL_USER: usuario
+      MYSQL_PASSWORD: "123456"
+    volumes:
+      - ./mysql_data:/var/lib/mysql
+      - ./bd/crear_tabla.sql:/docker-entrypoint-initdb.d/crear_tabla.sql
+  phpmyadmin:
+    image: phpmyadmin
+    ports:
+      - "8081:80"
+    depends_on:
+      - db
+    environment:
+      PMA_HOST: db
